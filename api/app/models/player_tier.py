@@ -1,27 +1,11 @@
 """Player tier assignment model."""
 
 from datetime import datetime
-from enum import StrEnum
-
 from sqlalchemy import CheckConstraint, DateTime, Enum, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.tiers import Tier
 from app.db.base import Base
-
-
-class Tier(StrEnum):
-    """Allowed player tier values, ordered from lowest to highest."""
-
-    LT5 = "LT5"
-    HT5 = "HT5"
-    LT4 = "LT4"
-    HT4 = "HT4"
-    LT3 = "LT3"
-    HT3 = "HT3"
-    LT2 = "LT2"
-    HT2 = "HT2"
-    LT1 = "LT1"
-    HT1 = "HT1"
 
 
 class PlayerTier(Base):
