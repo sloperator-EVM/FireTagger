@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Final
+from typing import Any, Final
+
+from app.core.config import settings
 
 
 class Tier(StrEnum):
@@ -30,9 +32,30 @@ class TierMetadata:
     color_code: str
 
 
+def _override_metadata(tier: Tier, metadata: TierMetadata) -> TierMetadata:
+    """Apply optional environment-driven display overrides for a tier."""
+
+    override = settings.tier_color_overrides.get(tier.value, {})
+    if not isinstance(override, dict):
+        return metadata
+    return TierMetadata(
+        key=tier,
+        display_name=_override_string(override, "display_name", metadata.display_name),
+        display_color=_override_string(override, "display_color", metadata.display_color),
+        color_code=_override_string(override, "color_code", metadata.color_code),
+    )
+
+
+def _override_string(override: dict[str, Any], key: str, default: str) -> str:
+    """Return a non-empty string override value or the default."""
+
+    value = override.get(key)
+    return value.strip() if isinstance(value, str) and value.strip() else default
+
+
 ORDERED_TIERS: Final[tuple[Tier, ...]] = tuple(Tier)
 
-TIER_METADATA: Final[dict[Tier, TierMetadata]] = {
+_DEFAULT_TIER_METADATA: Final[dict[Tier, TierMetadata]] = {
     Tier.LT5: TierMetadata(
         key=Tier.LT5,
         display_name="Low Tier 5",
@@ -93,6 +116,11 @@ TIER_METADATA: Final[dict[Tier, TierMetadata]] = {
         display_color="dark_red",
         color_code="§4",
     ),
+}
+
+TIER_METADATA: Final[dict[Tier, TierMetadata]] = {
+    tier: _override_metadata(tier, metadata)
+    for tier, metadata in _DEFAULT_TIER_METADATA.items()
 }
 
 VALID_TIER_KEYS: Final[frozenset[str]] = frozenset(tier.value for tier in ORDERED_TIERS)

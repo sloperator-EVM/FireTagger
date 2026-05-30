@@ -12,14 +12,19 @@ from fastapi import Header, HTTPException, Request, status
 
 from app.core.config import settings
 
-ADMIN_RATE_LIMIT: Final[tuple[int, int]] = (10, 60)
+ADMIN_RATE_LIMIT: Final[tuple[int, int]] = (
+    settings.admin_rate_limit,
+    settings.rate_limit_window_seconds,
+)
 _rate_limit_windows: dict[str, deque[float]] = defaultdict(deque)
 
 
 def require_admin_api_key(x_api_key: str = Header(default="", alias="X-API-Key")) -> str:
     """Require the configured admin API key before allowing admin mutations."""
 
-    if not settings.api_key or not compare_digest(x_api_key.encode(), settings.api_key.encode()):
+    if not settings.admin_api_key or not compare_digest(
+        x_api_key.encode(), settings.admin_api_key.encode()
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={

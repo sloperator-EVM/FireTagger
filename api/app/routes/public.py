@@ -14,14 +14,21 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.tiers import Tier, get_tier_metadata
 from app.db.session import get_db
 from app.models.player_tier import PlayerTier
 
 router = APIRouter(tags=["public"])
 
-LOOKUP_RATE_LIMIT: Final[tuple[int, int]] = (120, 60)
-FULL_MAPPING_RATE_LIMIT: Final[tuple[int, int]] = (12, 60)
+LOOKUP_RATE_LIMIT: Final[tuple[int, int]] = (
+    settings.public_lookup_rate_limit,
+    settings.rate_limit_window_seconds,
+)
+FULL_MAPPING_RATE_LIMIT: Final[tuple[int, int]] = (
+    settings.public_mapping_rate_limit,
+    settings.rate_limit_window_seconds,
+)
 _minecraft_username_max_length: Final[int] = 16
 _rate_limit_windows: dict[str, deque[float]] = defaultdict(deque)
 
