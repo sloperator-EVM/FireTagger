@@ -47,6 +47,7 @@ class AdminAssignRequest(BaseModel):
     minecraft_username: str = Field(..., min_length=1, max_length=16)
     discord_user_id: str = Field(..., min_length=1, max_length=32)
     tier: Tier
+    actor: str | None = Field(default=None, min_length=1, max_length=128)
 
     @field_validator("minecraft_username")
     @classmethod
@@ -68,6 +69,18 @@ class AdminAssignRequest(BaseModel):
             raise ValueError("discord_user_id is required")
         return discord_user_id
 
+    @field_validator("actor")
+    @classmethod
+    def normalize_optional_actor(cls, value: str | None) -> str | None:
+        """Trim an optional admin actor identifier before audit logging."""
+
+        if value is None:
+            return value
+        actor = value.strip()
+        if not actor:
+            raise ValueError("actor cannot be blank")
+        return actor
+
 
 class AdminUpdateRequest(BaseModel):
     """Admin request payload for updating an existing player tier assignment."""
@@ -77,6 +90,7 @@ class AdminUpdateRequest(BaseModel):
     minecraft_username: str | None = Field(default=None, min_length=1, max_length=16)
     discord_user_id: str | None = Field(default=None, min_length=1, max_length=32)
     tier: Tier | None = None
+    actor: str | None = Field(default=None, min_length=1, max_length=128)
 
     @field_validator("minecraft_username")
     @classmethod
@@ -101,3 +115,26 @@ class AdminUpdateRequest(BaseModel):
         if not discord_user_id:
             raise ValueError("discord_user_id cannot be blank")
         return discord_user_id
+
+    @field_validator("actor")
+    @classmethod
+    def normalize_optional_actor(cls, value: str | None) -> str | None:
+        """Trim an optional admin actor identifier before audit logging."""
+
+        if value is None:
+            return value
+        actor = value.strip()
+        if not actor:
+            raise ValueError("actor cannot be blank")
+        return actor
+
+
+class AdminDeleteResponse(BaseModel):
+    """Admin response returned after removing a player tier assignment."""
+
+    deleted: bool
+    minecraft_username: str
+    discord_user_id: str
+    tier: Tier
+    actor: str
+    deleted_at: datetime

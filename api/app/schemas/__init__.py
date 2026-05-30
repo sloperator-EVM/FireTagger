@@ -2,6 +2,7 @@
 
 from app.schemas.player import (
     AdminAssignRequest,
+    AdminDeleteResponse,
     AdminUpdateRequest,
     AllPlayerTiersResponse,
     PlayerTierResponse,
@@ -10,6 +11,7 @@ from app.schemas.tier import DeleteResponse, ErrorResponse, TierInput, TierMetad
 
 __all__ = [
     "AdminAssignRequest",
+    "AdminDeleteResponse",
     "AdminUpdateRequest",
     "AllPlayerTiersResponse",
     "DeleteResponse",
