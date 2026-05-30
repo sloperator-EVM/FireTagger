@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: firetagger
+      POSTGRES_USER: firetagger
+      POSTGRES_PASSWORD: firetagger
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U firetagger -d firetagger"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg://firetagger:firetagger@postgres:5432/firetagger
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-change-me}
+      PUBLIC_LOOKUP_RATE_LIMIT: ${PUBLIC_LOOKUP_RATE_LIMIT:-120}
+      PUBLIC_MAPPING_RATE_LIMIT: ${PUBLIC_MAPPING_RATE_LIMIT:-12}
+      ADMIN_RATE_LIMIT: ${ADMIN_RATE_LIMIT:-10}
+      RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      TIER_COLOR_OVERRIDES: ${TIER_COLOR_OVERRIDES:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres-data:
