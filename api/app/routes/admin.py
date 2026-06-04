@@ -138,6 +138,44 @@ def _find_conflicting_assignment(
     return db.scalar(statement)
 
 
+@router.get("/tiers", response_model=None)
+def list_player_tiers(db: Session = Depends(get_db)) -> dict[str, object]:
+    try:
+        assignments = list(
+            db.scalars(select(PlayerTier).order_by(PlayerTier.minecraft_username_lower)).all()
+        )
+    except SQLAlchemyError:
+        _raise_database_unavailable()
+
+    return {
+        "players": [
+            PlayerTierResponse.from_assignment(assignment).model_dump(mode="json")
+            for assignment in assignments
+        ]
+    }
+
+
+@router.get("/tiers/{minecraft_username}", response_model=PlayerTierResponse)
+def get_admin_player_tier(
+    minecraft_username: str,
+    db: Session = Depends(get_db),
+) -> PlayerTierResponse:
+    try:
+        assignment = db.scalar(
+            select(PlayerTier).where(
+                PlayerTier.minecraft_username_lower
+                == _normalize_minecraft_username(minecraft_username)
+            )
+        )
+    except SQLAlchemyError:
+        _raise_database_unavailable()
+
+    if assignment is None:
+        _raise_not_found(minecraft_username)
+
+    return PlayerTierResponse.from_assignment(assignment)
+
+
 @router.post("/tiers", response_model=PlayerTierResponse, status_code=status.HTTP_201_CREATED)
 def create_player_tier(
     request: AdminAssignRequest,

@@ -2,22 +2,23 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: firetagger
-      POSTGRES_USER: firetagger
-      POSTGRES_PASSWORD: firetagger
+      POSTGRES_DB: ${POSTGRES_DB:-firetagger}
+      POSTGRES_USER: ${POSTGRES_USER:-firetagger}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-firetagger}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U firetagger -d firetagger"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-firetagger} -d ${POSTGRES_DB:-firetagger}"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   api:
     build:
       context: ./api
     environment:
-      DATABASE_URL: postgresql+psycopg://firetagger:firetagger@postgres:5432/firetagger
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-firetagger}:${POSTGRES_PASSWORD:-firetagger}@postgres:5432/${POSTGRES_DB:-firetagger}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-change-me}
       PUBLIC_LOOKUP_RATE_LIMIT: ${PUBLIC_LOOKUP_RATE_LIMIT:-120}
       PUBLIC_MAPPING_RATE_LIMIT: ${PUBLIC_MAPPING_RATE_LIMIT:-12}
@@ -25,11 +26,40 @@ services:
       RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       TIER_COLOR_OVERRIDES: ${TIER_COLOR_OVERRIDES:-}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./bot
+    profiles: ["bot"]
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID:-}
+      TESTER_ROLE_ID: ${TESTER_ROLE_ID:-}
+      ADMIN_CHANNEL_ID: ${ADMIN_CHANNEL_ID:-1510325369209753694}
+      LOG_CHANNEL_ID: ${LOG_CHANNEL_ID:-1510325207103967475}
+      API_URL: ${BOT_API_URL:-http://api:8000}
+      API_KEY: ${ADMIN_API_KEY:-change-me}
+      TIER_ROLE_LT5: ${TIER_ROLE_LT5:-}
+      TIER_ROLE_HT5: ${TIER_ROLE_HT5:-}
+      TIER_ROLE_LT4: ${TIER_ROLE_LT4:-}
+      TIER_ROLE_HT4: ${TIER_ROLE_HT4:-}
+      TIER_ROLE_LT3: ${TIER_ROLE_LT3:-}
+      TIER_ROLE_HT3: ${TIER_ROLE_HT3:-}
+      TIER_ROLE_LT2: ${TIER_ROLE_LT2:-}
+      TIER_ROLE_HT2: ${TIER_ROLE_HT2:-}
+      TIER_ROLE_LT1: ${TIER_ROLE_LT1:-}
+      TIER_ROLE_HT1: ${TIER_ROLE_HT1:-}
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
   postgres-data:
