@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 
-revision = "0001_create_player_tiers_and_audit_logs"
+revision = "0001_player_tiers_audit_logs"
 down_revision = None
 branch_labels = None
 depends_on = None
